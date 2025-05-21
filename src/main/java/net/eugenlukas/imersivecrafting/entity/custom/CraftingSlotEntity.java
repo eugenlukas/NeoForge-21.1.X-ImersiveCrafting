@@ -1,10 +1,10 @@
 package net.eugenlukas.imersivecrafting.entity.custom;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -47,7 +47,7 @@ public class CraftingSlotEntity extends Animal {
 
     @Override
     public boolean isInvulnerableTo(DamageSource source) {
-        return true;
+        return !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 
     @Override
@@ -104,5 +104,13 @@ public class CraftingSlotEntity extends Animal {
         }
 
         return InteractionResult.PASS;
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        setNoGravity(true);
+        setDeltaMovement(0, 0, 0);
+        setPos(getX(), getY(), getZ());
     }
 }

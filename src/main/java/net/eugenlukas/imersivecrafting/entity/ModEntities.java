@@ -16,8 +16,8 @@ public class ModEntities {
 
     public static final Supplier<EntityType<CraftingSlotEntity>> Custom_Crafting_Slot =
             ENTITY_TYPES.register("customcraftingslot", () -> EntityType.Builder
-                    .<CraftingSlotEntity>of(CraftingSlotEntity::new, MobCategory.MISC)
-                    .sized(0.5f, 0.5f) // kleiner Cube
+                    .<CraftingSlotEntity>of(CraftingSlotEntity::new, MobCategory.MISC).noSummon()
+                    .sized(0.2f, 0.2f) // kleiner Cube
                     .build("customcraftingslot"));
 
     public static void register(IEventBus bus) {
