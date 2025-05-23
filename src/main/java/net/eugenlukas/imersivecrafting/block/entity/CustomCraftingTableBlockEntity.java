@@ -5,15 +5,19 @@ import net.eugenlukas.imersivecrafting.entity.custom.CraftingSlotEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class CustomCraftingTableBlockEntity extends BlockEntity {
@@ -28,19 +32,24 @@ public class CustomCraftingTableBlockEntity extends BlockEntity {
     }
 
     public void spawnCraftingSlots(Level level, BlockPos pos) {
-        double slotSpacing = 0.2; // Abstand zwischen den Slots
+        System.out.println("spawn slots");
+        double slotSpacing = 0.2; // Distance between the slots
         double startX = pos.getX() + 0.3;
-        double startZ = pos.getZ() + 0.35;
-        double y = pos.getY() + 0.95; // leicht über dem Block
+        double startZ = pos.getZ() + 0.3;
+        double y = pos.getY() + 0.85; // Little over the block
 
+        int i = 1;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 double x = startX + col * slotSpacing;
                 double z = startZ + row * slotSpacing;
                 CraftingSlotEntity slotEntity = new CraftingSlotEntity(ModEntities.Custom_Crafting_Slot.get(), level);
                 slotEntity.setPos(x, y, z);
+                //slotEntity.setCustomName(Component.literal(Integer.toString(i)));
+                //slotEntity.setCustomNameVisible(true);
                 level.addFreshEntity(slotEntity);
                 slotEntityUUIDs.add(slotEntity.getUUID());
+                i++;
             }
         }
     }
@@ -81,5 +90,46 @@ public class CustomCraftingTableBlockEntity extends BlockEntity {
                 }
             }
         }
+    }
+
+    public void tryCraft() {
+        if (level.isClientSide()) return; // only run on the server side
+
+        List<ItemStack> items = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            CraftingSlotEntity slotEntity = (CraftingSlotEntity) ((ServerLevel) level).getEntity(slotEntityUUIDs.get(i));
+            ItemStack stack = slotEntity.inventory.getStackInSlot(0);
+            if (stack != null)
+                items.add(i, slotEntity.inventory.getStackInSlot(0));
+        }
+
+        CraftingInput input = CraftingInput.of(3, 3, items);
+
+        Optional<RecipeHolder<CraftingRecipe>> recipe = level.getServer().getRecipeManager()
+                .getRecipeFor(RecipeType.CRAFTING, input, level);
+
+        if (recipe.isPresent()) {
+            ItemStack result = recipe.get().value().assemble(input, level.registryAccess());
+
+            BlockPos dropPos = this.getBlockPos();
+            double x = dropPos.getX();
+            double y = dropPos.getY();
+            double z = dropPos.getZ() + 0.95f;
+
+            ItemEntity itemEntity = new ItemEntity(level, x, y, z, result.copy());
+            itemEntity.setDefaultPickUpDelay();
+
+            level.addFreshEntity(itemEntity);
+
+            for (UUID uuid : slotEntityUUIDs) {
+                CraftingSlotEntity slotEntity = (CraftingSlotEntity) ((ServerLevel) level).getEntity(uuid);
+                slotEntity.clearContents();
+            }
+        }
+        else System.out.println("No recipe found!");
+    }
+
+    public List<UUID> getSlots() {
+        return slotEntityUUIDs;
     }
 }

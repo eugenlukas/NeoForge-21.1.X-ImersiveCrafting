@@ -2,10 +2,12 @@ package net.eugenlukas.imersivecrafting;
 
 import net.eugenlukas.imersivecrafting.block.ModBlocks;
 import net.eugenlukas.imersivecrafting.block.entity.ModBlockEntities;
+import net.eugenlukas.imersivecrafting.block.entity.renderer.CustomCraftingTableBlockEntityRenderer;
 import net.eugenlukas.imersivecrafting.entity.ModEntities;
 import net.eugenlukas.imersivecrafting.entity.client.CraftingSlotEntityRenderer;
 import net.eugenlukas.imersivecrafting.item.ModItems;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -94,6 +96,11 @@ public class ImersiveCrafting
         public static void onClientSetup(FMLClientSetupEvent event)
         {
             EntityRenderers.register(ModEntities.Custom_Crafting_Slot.get(), CraftingSlotEntityRenderer::new);
+        }
+
+        @SubscribeEvent
+        public static void registerBER(EntityRenderersEvent.RegisterRenderers event) {
+            event.registerBlockEntityRenderer(ModBlockEntities.CUSTOMCRAFTINGTABLEBLOCK_BE.get(), CustomCraftingTableBlockEntityRenderer::new);
         }
     }
 }
